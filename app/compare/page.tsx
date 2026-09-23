@@ -8,6 +8,8 @@ import type { SavedRun } from "@/lib/store/runs";
 
 export default function ComparePage() {
   const [runs, setRuns] = useState<SavedRun[] | null>(null);
+  const [brief, setBrief] = useState<string | null>(null);
+  const [briefing, setBriefing] = useState(false);
 
   useEffect(() => {
     void fetch("/api/runs")
@@ -18,6 +20,32 @@ export default function ComparePage() {
 
   const current = (runs ?? []).filter((run) => run.version === city.version && typeof run.score === "number");
   const max = Math.max(60, ...current.map((run) => run.score));
+
+  async function explain() {
+    if (current.length < 2) return;
+    const left = current[current.length - 2];
+    const right = current[current.length - 1];
+    setBriefing(true);
+    setBrief(null);
+    try {
+      const response = await fetch("/api/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          left: left.choices,
+          right: right.choices,
+          leftName: left.teamName,
+          rightName: right.teamName,
+        }),
+      });
+      const payload = (await response.json()) as { text?: string };
+      setBrief(payload.text ?? "Сравнение не собралось.");
+    } catch {
+      setBrief("Сравнение не собралось.");
+    } finally {
+      setBriefing(false);
+    }
+  }
 
   return (
     <main className="space-y-5">
@@ -34,6 +62,15 @@ export default function ComparePage() {
           <Link href="/decide" className="btn btn-dark mt-5">Собрать набор</Link>
         </article>
       ) : null}
+      {current.length >= 2 ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" className="btn btn-dark" onClick={() => void explain()} disabled={briefing}>
+            {briefing ? "Сравниваем…" : "Сравнить две последние"}
+          </button>
+          <p className="text-sm text-ink-soft">Берём два верхних прогона. Числа считает движок, текст только объясняет их.</p>
+        </div>
+      ) : null}
+      {brief ? <article className="paper-card p-5 text-sm leading-6">{brief}</article> : null}
       <div className="grid gap-4">
         {current.map((run, index) => (
           <article key={run.createdAt + run.teamName} className="paper-card grid items-center gap-4 p-5 md:grid-cols-[auto_1fr_auto]">

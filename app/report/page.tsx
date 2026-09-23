@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CityMap } from "@/components/CityMap";
@@ -10,8 +10,9 @@ import type { Briefing } from "@/lib/ai/briefing";
 import { districtById, indicatorTitle } from "@/lib/engine/city";
 import { formatScore, formatSigned } from "@/lib/engine/format";
 import { journalLines } from "@/lib/engine/present";
+import { rivalPlan } from "@/lib/engine/coach";
 import { recommend } from "@/lib/engine/recommend";
-import { InvalidPortfolioError, simulate } from "@/lib/engine/simulate";
+import { InvalidPortfolioError, simulate, yearFrames } from "@/lib/engine/simulate";
 import { loadDraft, saveDraft } from "@/lib/draft";
 import type { ScenarioResult } from "@/lib/engine/types";
 
@@ -26,6 +27,24 @@ export default function ReportPage() {
   const [analysisError, setAnalysisError] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [ready, setReady] = useState(false);
+  const [quarter, setQuarter] = useState(8);
+  const [playing, setPlaying] = useState(false);
+  const frames = useMemo(() => (result ? yearFrames(result.choices) : []), [result]);
+  const rival = useMemo(() => rivalPlan(), []);
+
+  useEffect(() => {
+    if (!playing) return;
+    const timer = window.setInterval(() => {
+      setQuarter((current) => {
+        if (current >= 8) {
+          setPlaying(false);
+          return 8;
+        }
+        return current + 1;
+      });
+    }, 850);
+    return () => window.clearInterval(timer);
+  }, [playing]);
 
   useEffect(() => {
     const draft = loadDraft();
@@ -89,6 +108,8 @@ export default function ReportPage() {
   }
 
   const advice = recommend(result.choices);
+  const frame = frames[quarter] ?? frames[frames.length - 1];
+  const shown = frame?.districts ?? result.districts;
   const shadows = [...advice.improvements, ...(advice.floorPick ? [advice.floorPick] : [])];
   const floorName = districtById(result.floorDistrictId)?.name ?? result.floorDistrictId;
 
@@ -103,7 +124,7 @@ export default function ReportPage() {
       </section>
       <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="paper-card p-4">
-          <CityMap districts={result.districts} />
+          <CityMap districts={shown} />
         </div>
         <div className="paper-card p-5">
           <table className="w-full text-left text-sm">
@@ -116,12 +137,12 @@ export default function ReportPage() {
               </tr>
             </thead>
             <tbody>
-              {result.districts.map((district) => (
+              {shown.map((district) => (
                 <tr key={district.id} className="border-t border-line">
                   <td className="py-2">{district.name}</td>
                   <td>{formatScore(district.beforeScore)}</td>
                   <td>{formatScore(district.afterScore)}</td>
-                  <td>{formatSigned(district.delta)}</td>
+                  <td className={district.delta > 0.05 ? "font-semibold text-steppe" : district.delta < -0.05 ? "font-semibold text-seal" : ""}>{formatSigned(district.delta)}</td>
                 </tr>
               ))}
             </tbody>
@@ -139,6 +160,63 @@ export default function ReportPage() {
         </div>
       </div>
 
+      <section className="paper-card p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-gold-deep">Два года по кварталам</p>
+            <h2 className="font-serif text-3xl">Квартал {frame?.quarter ?? 8} из 8</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              {frame?.started.length ? `Включилось: ${frame.started.join(", ")}.` : "Новые меры в этом квартале не стартуют."} Score сейчас {frame ? formatScore(frame.score) : ""}.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn-dark"
+            onClick={() => {
+              if (playing) {
+                setPlaying(false);
+                return;
+              }
+              if (quarter >= 8) setQuarter(0);
+              setPlaying(true);
+            }}
+          >
+            {playing ? "Пауза" : "Смотреть два года"}
+          </button>
+        </div>
+        <input
+          className="mt-4 w-full accent-[#1f7a5c]"
+          type="range"
+          min={0}
+          max={8}
+          value={frame?.quarter ?? 8}
+          onChange={(event) => {
+            setPlaying(false);
+            setQuarter(Number(event.target.value));
+          }}
+        />
+        <p className="mt-2 text-xs text-ink-soft">Мера молчит свой лаг, потом каждый квартал добавляет 1/8 эффекта. На 8-м квартале это тот же итоговый Score.</p>
+      </section>
+      <section className="paper-card flex flex-wrap items-center justify-between gap-4 p-5">
+        <div>
+          <p className="text-sm font-semibold text-gold-deep">Аким-автомат</p>
+          <p className="mt-1 max-w-xl text-sm leading-6 text-ink-soft">
+            Соперник собрал свой набор на том же каталоге и бюджете. Его Score {formatScore(rival.score)}. Ваш — {formatScore(result.score)}, разница {formatSigned(result.score - rival.score)}.
+          </p>
+          <p className="mt-2 text-sm text-ink-soft">{rival.titles.join(" · ")}</p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-line"
+          onClick={() => {
+            const draft = loadDraft();
+            saveDraft({ ...draft, choices: rival.choices });
+            router.push("/decide");
+          }}
+        >
+          Открыть его набор
+        </button>
+      </section>
       <section className="grid gap-4 md:grid-cols-2">
         <article className="paper-card p-5">
           <h2 className="font-serif text-2xl">Сильные стороны</h2>

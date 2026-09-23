@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CityMap } from "@/components/CityMap";
 import { CHEAP, EXAMPLE } from "@/lib/engine/canon";
 import { city, indicatorTitle, measureById } from "@/lib/engine/city";
 import { formatScore, formatSigned } from "@/lib/engine/format";
+import { coach } from "@/lib/engine/coach";
+import { cityInsight, helpsWeakDistrict } from "@/lib/engine/insights";
 import { canAdd, project } from "@/lib/engine/simulate";
 import { loadDraft, saveDraft, type Draft } from "@/lib/draft";
 import type { Choice, DirectionId, Indicator } from "@/lib/engine/types";
@@ -23,6 +25,8 @@ export default function DecidePage() {
   const [direction, setDirection] = useState<DirectionId>("social");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [onlyWeak, setOnlyWeak] = useState(false);
 
   useEffect(() => {
     const loaded = loadDraft();
@@ -42,8 +46,17 @@ export default function DecidePage() {
   }, [pendingId]);
 
   const view = project(draft.choices);
+  const hintKey = draft.choices.map((item) => `${item.measureId}:${item.districtId ?? ""}`).join("|");
+  const hints = useMemo(() => coach(draft.choices), [hintKey, draft.choices]);
   const pending = pendingId ? measureById(pendingId) : undefined;
-  const measures = city.measures.filter((item) => item.direction === direction);
+  const floorDistrict = [...view.districts].sort((a, b) => a.afterScore - b.afterScore)[0];
+  const pulse = cityInsight(draft.choices, view.districts, view.cost);
+  const measures = city.measures.filter((item) => {
+    if (item.direction !== direction) return false;
+    if (query.trim() && !item.title.toLowerCase().includes(query.trim().toLowerCase())) return false;
+    if (onlyWeak && !helpsWeakDistrict(item, floorDistrict)) return false;
+    return true;
+  });
   const spent = Math.max(0, view.cost);
 
   function commit(choices: Choice[]) {
@@ -116,6 +129,24 @@ export default function DecidePage() {
         </ol>
       </section>
 
+      {hints.length > 0 ? (
+        <section className="mt-4 grid gap-3 md:grid-cols-3">
+          {hints.map((hint) => (
+            <button
+              key={`${hint.choice.measureId}:${hint.choice.districtId ?? "city"}`}
+              type="button"
+              onClick={() => add(hint.choice)}
+              className="paper-card p-4 text-left hover:ring-2 hover:ring-gold"
+            >
+              <p className="text-sm font-semibold text-gold-deep">Следующий сильный ход</p>
+              <p className="mt-1 font-serif text-2xl">{hint.title}</p>
+              <p className="text-sm text-ink-soft">{hint.place} · {hint.cost}</p>
+              <p className="mt-2 text-sm">Дальше по сильным ходам Score около {formatScore(hint.finalScore)}</p>
+            </button>
+          ))}
+        </section>
+      ) : null}
+
       {pending ? (
         <section ref={pickerRef} className="paper-card mt-4 p-5 ring-2 ring-gold">
           <p className="text-sm font-semibold text-gold-deep">Следующий шаг</p>
@@ -142,7 +173,14 @@ export default function DecidePage() {
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
-          <h2 className="font-serif text-2xl">Направление</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-serif text-2xl">Каталог</h2>
+            <label className="flex items-center gap-2 text-sm text-ink-soft">
+              <input type="checkbox" checked={onlyWeak} onChange={(event) => setOnlyWeak(event.target.checked)} />
+              Только меры для {floorDistrict?.name ?? "слабого района"}
+            </label>
+          </div>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти меру" className="field field-light mt-3" />
           <div className="mt-3 flex flex-wrap gap-2">
             {city.directions.map((item) => {
               const count = draft.choices.filter((choice) => measureById(choice.measureId)?.direction === item.id).length;
@@ -156,6 +194,7 @@ export default function DecidePage() {
             })}
           </div>
           <div className="mt-4 grid gap-3">
+            {measures.length === 0 ? <p className="text-sm text-ink-soft">В этом направлении нет мер по такому запросу.</p> : null}
             {measures.map((item) => {
               const picked = draft.choices.some((choice) => choice.measureId === item.id);
               const possible = item.scope === "city"
@@ -195,10 +234,38 @@ export default function DecidePage() {
           </div>
         </div>
 
-        <aside className="lg:sticky lg:top-4">
+        <aside className="space-y-4 lg:sticky lg:top-4">
+          <div className="paper-card p-4">
+            <h2 className="px-1 font-serif text-2xl">Правила</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {pulse.rules.map((rule) => (
+                <li key={rule.label} className={rule.ok ? "text-steppe" : "text-ink-soft"}>{rule.ok ? "●" : "○"} {rule.label}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="paper-card p-4">
+            <h2 className="px-1 font-serif text-2xl">Ниже 40</h2>
+            {pulse.criticals.length === 0 ? <p className="mt-2 text-sm text-steppe">Таких показателей нет.</p> : (
+              <ul className="mt-2 space-y-1 text-sm">
+                {pulse.criticals.map((item) => (
+                  <li key={item.name + item.title}>{item.name}: {item.title} · {item.value.toFixed(1).replace(".", ",")}</li>
+                ))}
+              </ul>
+            )}
+            {pulse.synergies.length ? (
+              <ul className="mt-3 space-y-1 text-sm text-ink-soft">
+                {pulse.synergies.map((item) => (
+                  <li key={item.id}>{item.state === "on" ? "Синергия включена. " : `Не хватает: ${item.missing}. `}{item.text}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
           <div className="paper-card p-4">
             <h2 className="px-1 font-serif text-2xl">Город после набора</h2>
-            <CityMap districts={view.districts} />
+            <CityMap
+              districts={view.districts}
+              onDistrictClick={pending ? (id) => add({ measureId: pending.id, districtId: id }) : undefined}
+            />
           </div>
         </aside>
       </section>
@@ -209,6 +276,7 @@ export default function DecidePage() {
             {view.scored ? `Набор готов · Score ${formatScore(view.scored.score)}` : `Свободно мест: ${5 - draft.choices.length}`}
           </p>
           <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit([]); }}>Очистить</button>
             <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit(EXAMPLE); }}>Пример</button>
             <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit(CHEAP); }}>Дешевле</button>
             <button type="button" disabled={!view.scored} onClick={() => router.push("/report")} className="btn btn-gold">

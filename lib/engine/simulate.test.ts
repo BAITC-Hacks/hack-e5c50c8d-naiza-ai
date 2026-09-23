@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { CHEAP, EXAMPLE, OVER_BUDGET } from "./canon";
 import { assertCity } from "./city";
 import { recommend } from "./recommend";
-import { InvalidPortfolioError, simulate, validate } from "./simulate";
+import { coach } from "./coach";
+import { cityInsight } from "./insights";
+import { canAdd, InvalidPortfolioError, project, simulate, validate, yearFrames } from "./simulate";
+import { rivalPlan } from "./coach";
 import type { Choice } from "./types";
 
 describe("методика города", () => {
@@ -30,6 +33,22 @@ describe("методика города", () => {
     expect(result.nCrit).toBe(0);
     expect(result.synergies.some((item) => item.id === "M10+M12" && item.districtId === "nura")).toBe(true);
     expect(validate(EXAMPLE)).toEqual([]);
+  });
+
+  it("восьмой квартал совпадает с итоговым Score, а ЛРТ молчит до конца лага", () => {
+    const frames = yearFrames(EXAMPLE);
+    expect(frames).toHaveLength(9);
+    expect(frames[0].score).toBeCloseTo(simulate([]).score, 2);
+    expect(frames[8].score).toBeCloseTo(simulate(EXAMPLE).score, 2);
+    const late = yearFrames([{ measureId: "M3", districtId: "esil" }, { measureId: "M9", districtId: "nura" }, { measureId: "M10", districtId: "almaty" }, { measureId: "M12", districtId: null }, { measureId: "M4", districtId: "saryarka" }]);
+    expect(late[4].started.join(" ")).not.toContain("ЛРТ");
+    expect(late[5].started.join(" ")).toContain("ЛРТ");
+  });
+
+  it("аким-автомат собирает допустимую пятёрку сильнее базы", () => {
+    const rival = rivalPlan();
+    expect(validate(rival.choices)).toEqual([]);
+    expect(rival.score).toBeGreaterThan(simulate([]).score);
   });
 
   it("порядок решений не меняет Score", () => {
@@ -114,6 +133,28 @@ describe("методика города", () => {
     ];
     expect(validate(broken).some((item) => item.code === "missing_district")).toBe(true);
     expect(() => simulate(broken)).toThrow(InvalidPortfolioError);
+  });
+
+  it("панель города на пустом наборе показывает два провала Нуры и незакрытые правила", () => {
+    const view = project([]);
+    const pulse = cityInsight([], view.districts, 0);
+    expect(pulse.criticals).toHaveLength(2);
+    expect(pulse.criticals.every((item) => item.name === "Нура")).toBe(true);
+    expect(pulse.rules.find((item) => item.label.startsWith("Пять мер"))?.ok).toBe(false);
+    expect(pulse.rules.find((item) => item.label.startsWith("Бюджет"))?.ok).toBe(true);
+  });
+
+  it("совет предлагает следующий ход, из которого собирается допустимая пятёрка", () => {
+    const hints = coach([]);
+    expect(hints).toHaveLength(3);
+    for (const hint of hints) {
+      expect(hint.finalScore).toBeGreaterThan(simulate([]).score);
+      expect(canAdd([], hint.choice).ok).toBe(true);
+    }
+    const partial = EXAMPLE.slice(0, 3);
+    const next = coach(partial);
+    expect(next.length).toBeGreaterThan(0);
+    expect(next[0].finalScore).toBeGreaterThanOrEqual(next[next.length - 1].finalScore);
   });
 
   it("тень не предлагает набор вне правил", () => {

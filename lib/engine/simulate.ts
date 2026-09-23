@@ -104,8 +104,9 @@ export function validate(choices: Choice[], source: City = defaultCity, partial 
   return reasons;
 }
 
-function apply(choices: Choice[], source: City) {
-  const factorOf = (lag: number) => (source.horizon - lag) / source.horizon;
+function apply(choices: Choice[], source: City, quarter?: number) {
+  const factorOf = (lag: number) =>
+    quarter === undefined ? (source.horizon - lag) / source.horizon : Math.max(0, quarter - lag) / source.horizon;
   const deltas = new Map(source.districts.map((district) => [district.id, emptyIndicators()]));
   const contributions: Contribution[] = [];
 
@@ -131,6 +132,10 @@ function apply(choices: Choice[], source: City) {
   for (const rule of source.synergies) {
     const selected = rule.measures.every((id) => choices.some((choice) => choice.measureId === id));
     if (!selected) continue;
+    if (quarter !== undefined) {
+      const readyAt = Math.max(...rule.measures.map((id) => measureById(id, source)?.lag ?? 0));
+      if (quarter <= readyAt) continue;
+    }
     const anchor = choices.find((choice) => choice.measureId === rule.anchor);
     if (!anchor?.districtId) continue;
     const bucket = deltas.get(anchor.districtId);
@@ -292,6 +297,50 @@ export function simulate(choices: Choice[], source: City = defaultCity): Scenari
     biggestMovers: movers,
     evidenceIds,
   };
+}
+
+export function outlook(choices: Choice[], source: City = defaultCity): number | null {
+  const reasons = validate(choices, source, true).filter((item) => item.code !== "count");
+  if (reasons.length) return null;
+  const applied = apply(choices, source);
+  const stats = cityStats(applied.districts, source);
+  const raw = source.score.mean * stats.mean + source.score.floor * stats.floor - source.score.criticalPenalty * applied.criticals.length;
+  return round2(raw);
+}
+
+export type YearFrame = {
+  quarter: number;
+  score: number;
+  mean: number;
+  floor: number;
+  floorDistrictId: string;
+  nCrit: number;
+  districts: DistrictSnapshot[];
+  started: string[];
+};
+
+export function yearFrames(choices: Choice[], source: City = defaultCity): YearFrame[] {
+  const morning = baseline(source);
+  return Array.from({ length: source.horizon + 1 }, (_, quarter) => {
+    const applied = apply(choices, source, quarter);
+    const stats = cityStats(applied.districts, source);
+    const raw = source.score.mean * stats.mean + source.score.floor * stats.floor - source.score.criticalPenalty * applied.criticals.length;
+    const started = choices
+      .map((choice) => measureById(choice.measureId, source))
+      .filter((measure): measure is NonNullable<typeof measure> => Boolean(measure))
+      .filter((measure) => quarter === measure.lag + 1)
+      .map((measure) => measure.title);
+    return {
+      quarter,
+      score: round2(raw),
+      mean: round2(stats.mean),
+      floor: round2(stats.floor),
+      floorDistrictId: stats.floorDistrictId,
+      nCrit: applied.criticals.length,
+      districts: applied.districts,
+      started,
+    };
+  }).map((frame, _, all) => (frame.quarter === 0 ? { ...frame, score: morning.score, mean: morning.mean, floor: morning.floor } : frame));
 }
 
 export function project(choices: Choice[], source: City = defaultCity): Projection {
