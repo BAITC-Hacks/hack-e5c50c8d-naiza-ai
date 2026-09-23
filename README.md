@@ -60,6 +60,11 @@ validate() / simulate() / recommend()
 
 Требуется Node.js LTS и Windows/macOS/Linux с PowerShell или обычным терминалом.
 
+Node.js нужен не для самого расчёта как отдельной программы, а потому что интерфейс
+собран на Next.js: браузеру нужен локальный сервер, который отдаёт страницы и API
+маршруты (`/api/analyze`, `/api/runs`, `/api/health`). `localhost` — это адрес этого
+сервера только на компьютере пользователя; данные не публикуются в интернет.
+
 ```powershell
 git clone https://github.com/BAITC-Hacks/hack-e5c50c8d-naiza-ai.git
 cd hack-e5c50c8d-naiza-ai
@@ -73,6 +78,11 @@ npm run dev
 На Windows можно открыть `start-local.cmd`: он проверит Node.js, установит зависимости при первом запуске, создаст `.env` из примера и откроет локальный сервер.
 
 В проекте также есть `Akim.exe`. Это Windows-лаунчер для папки проекта: рядом с ним должны лежать `package.json` и `node_modules`, а Node.js LTS должен быть установлен в PATH. Лаунчер поднимает сервер на `http://localhost:4173`, показывает окно управления сервером и открывает браузер.
+
+Для жюри и пользователей без установленного Node.js предназначен portable-релиз:
+скачайте [akim-na-5-chasov-portable-win-x64.zip](https://github.com/BAITC-Hacks/hack-e5c50c8d-naiza-ai/releases/download/v1.0.0-hackalem/akim-na-5-chasov-portable-win-x64.zip),
+распакуйте архив полностью и запустите `START-HERE.cmd`. Внутри уже есть нужный
+Node.js runtime и зависимости; вручную устанавливать Node.js не требуется.
 
 ## Как проверить решение
 
@@ -127,11 +137,14 @@ XAI_MODEL=grok-4.7
 - без `XAI_API_KEY` живой совет недоступен, но расчёт и fallback-доклад продолжают работать;
 - серверная полка прогонов рассчитана на локальную машину;
 - публичной deployed-версии сейчас нет;
-- `Akim.exe` — лаунчер для установленного Node.js, а не полностью автономный portable runtime.
+- одиночный `Akim.exe` — лаунчер папки проекта, а не полностью автономный portable runtime;
+- portable-релиз запускает локальный Next.js-сервер, поэтому после запуска открывается браузер на `localhost`.
 
 ## Файлы релиза
 
-В корне репозитория находится Windows-файл `Akim.exe`. Его можно скачать вместе с исходным кодом и запускать из распакованной папки проекта при наличии Node.js LTS и зависимостей. Portable ZIP с собственным runtime собирается отдельно и не должен попадать в исходный репозиторий.
+В корне репозитория находится исходный Windows-файл `Akim.exe`. Его можно запускать
+из распакованной папки проекта при наличии Node.js LTS и зависимостей. Для запуска
+без установки Node.js используйте portable ZIP в разделе [Releases](https://github.com/BAITC-Hacks/hack-e5c50c8d-naiza-ai/releases/tag/v1.0.0-hackalem).
 
 ## Репозиторий
 
