@@ -38,7 +38,12 @@ export default function RealMap({
     }).addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+    const fix = () => map.invalidateSize();
+    const timer = window.setTimeout(fix, 150);
+    window.addEventListener("resize", fix);
     return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("resize", fix);
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -48,6 +53,7 @@ export default function RealMap({
   useEffect(() => {
     const group = layerRef.current;
     if (!group) return;
+    mapRef.current?.invalidateSize();
     group.clearLayers();
     for (const district of districts) {
       const spot = PLACES[district.id];
@@ -61,9 +67,8 @@ export default function RealMap({
         fillOpacity: 0.95,
       });
       marker.bindTooltip(`${district.name} · ${district.afterScore.toFixed(1).replace(".", ",")}`, {
-        permanent: true,
         direction: "top",
-        offset: [0, -6],
+        offset: [0, -8],
       });
       marker.on("click", () => {
         setSelectedId(district.id);
@@ -75,14 +80,14 @@ export default function RealMap({
 
   return (
     <div className="space-y-3">
-      <div ref={host} className="h-[440px] overflow-hidden rounded-3xl border border-line" />
+      <div ref={host} className="city-map" />
       {selected && place ? (
-        <article className="grid gap-0 overflow-hidden rounded-3xl bg-card md:grid-cols-[1.35fr_1fr]">
-          <img src={place.photo} alt={`Образ района ${selected.name}`} className="h-56 w-full object-cover md:h-full" />
-          <div className="p-4 md:p-5">
+        <article className="grid items-center gap-0 overflow-hidden rounded-3xl bg-card sm:grid-cols-[148px_1fr]">
+          <img src={place.photo} alt={`Образ района ${selected.name}`} className="h-28 w-full object-cover sm:h-32" />
+          <div className="p-4">
             <p className="text-sm font-semibold text-gold-deep">{place.shore}</p>
-            <h3 className="font-serif text-3xl">{selected.name}</h3>
-            <p className="mt-1 font-serif text-4xl">{selected.afterScore.toFixed(2).replace(".", ",")}</p>
+            <h3 className="font-serif text-2xl">{selected.name}</h3>
+            <p className="font-serif text-3xl">{selected.afterScore.toFixed(2).replace(".", ",")}</p>
             <p className="mt-2 text-sm leading-6 text-ink-soft">{selected.profile}</p>
             <p className="mt-3 text-xs leading-5 text-ink-soft">Точка стоит примерно в характерном месте района. Снимок — образ для симулятора, не официальная фотофиксация. Числа условные.</p>
           </div>

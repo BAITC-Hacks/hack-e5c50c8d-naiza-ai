@@ -23,15 +23,44 @@ html {
 }
 
 body {
-  background: #efeae2;
-  color: #121820;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+[data-theme="night"] {
+  --color-paper: #0e141c;
+  --color-paper-deep: #1c2733;
+  --color-card: #17202b;
+  --color-ink: #f4efe6;
+  --color-ink-soft: #b7c2cc;
+  --color-gold: #e4b15a;
+  --color-gold-deep: #f0c98a;
+  --color-gold-soft: #3a2e1c;
+  --color-cream: #f7f1e8;
+  --color-line: #2c3a48;
+  --color-steppe: #3dbe8c;
+  --color-seal: #ff8d7a;
+}
+
+[data-theme="steppe"] {
+  --color-paper: #e5f2ea;
+  --color-paper-deep: #d3e6db;
+  --color-card: #f6fbf8;
+  --color-ink: #10241c;
+  --color-ink-soft: #4d675c;
+  --color-gold: #c9862a;
+  --color-gold-deep: #8a5a16;
+  --color-gold-soft: #f3e7cf;
+  --color-cream: #f4faf6;
+  --color-line: #cfe0d6;
+  --color-steppe: #1f7a5c;
 }
 
 .dossier {
   background:
     radial-gradient(900px 420px at 0% -10%, rgba(228, 177, 90, 0.18), transparent 55%),
     radial-gradient(700px 380px at 100% 0%, rgba(45, 109, 143, 0.12), transparent 50%),
-    #efeae2;
+    var(--color-paper);
 }
 
 .hero {
@@ -46,8 +75,8 @@ body {
 }
 
 .paper-card {
-  background: rgba(255, 252, 248, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--color-card) 94%, transparent);
+  border: 1px solid var(--color-line);
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(18, 24, 32, 0.05);
 }
@@ -69,8 +98,8 @@ body {
 }
 
 .chip-light {
-  background: #f3eee6;
-  color: #5d6b78;
+  background: var(--color-paper);
+  color: var(--color-ink-soft);
 }
 
 .btn {
@@ -96,8 +125,8 @@ body {
 }
 
 .btn-dark {
-  background: #121820;
-  color: #f7f1e8;
+  background: var(--color-ink);
+  color: var(--color-paper);
 }
 
 .btn-gold {
@@ -111,9 +140,9 @@ body {
 }
 
 .btn-line {
-  border: 1px solid #e6ddd2;
-  background: white;
-  color: #121820;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  color: var(--color-ink);
 }
 
 .btn-ghost {
@@ -141,9 +170,9 @@ body {
 }
 
 .field-light {
-  border-color: #e6ddd2;
-  background: white;
-  color: #121820;
+  border-color: var(--color-line);
+  background: var(--color-card);
+  color: var(--color-ink);
 }
 
 .field-light::placeholder {
@@ -157,7 +186,7 @@ body {
   left: 0;
   z-index: 30;
   border-top: 1px solid rgba(230, 221, 210, 0.9);
-  background: rgba(255, 252, 248, 0.9);
+  background: color-mix(in srgb, var(--color-card) 92%, transparent);
   backdrop-filter: blur(16px);
 }
 
@@ -176,7 +205,38 @@ body {
 }
 
 .paper-card .meter {
-  background: #e4ddd2;
+  background: var(--color-paper-deep);
+}
+
+.city-map.leaflet-container {
+  z-index: 0;
+  height: 420px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid var(--color-line);
+  background: #d5e0e8;
+  font-family: inherit;
+}
+
+.city-map.leaflet-container img,
+.city-map.leaflet-container .leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.city-map .leaflet-tooltip {
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.city-map .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 252, 248, 0.85);
 }
 
 @media print {

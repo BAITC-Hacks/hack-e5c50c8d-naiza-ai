@@ -6,6 +6,7 @@ import "@fontsource/source-sans-3/400.css";
 import "@fontsource/source-sans-3/600.css";
 import "./globals.css";
 import { Frame } from "@/components/Frame";
+import { PrefsProvider } from "@/lib/prefs";
 
 export const metadata: Metadata = {
   title: "Аким на 5 часов",
@@ -14,9 +15,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="ru" data-theme="paper">
       <body className="font-sans antialiased">
-        <Frame>{children}</Frame>
+        <PrefsProvider>
+          <Frame>{children}</Frame>
+        </PrefsProvider>
       </body>
     </html>
   );

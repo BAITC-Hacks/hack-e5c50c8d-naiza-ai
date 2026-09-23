@@ -10,6 +10,7 @@ import { coach } from "@/lib/engine/coach";
 import { cityInsight, helpsWeakDistrict } from "@/lib/engine/insights";
 import { canAdd, project } from "@/lib/engine/simulate";
 import { loadDraft, saveDraft, type Draft } from "@/lib/draft";
+import { usePrefs } from "@/lib/prefs";
 import type { Choice, DirectionId, Indicator } from "@/lib/engine/types";
 
 function effectText(effects: Partial<Record<Indicator, number>>) {
@@ -20,6 +21,7 @@ function effectText(effects: Partial<Record<Indicator, number>>) {
 
 export default function DecidePage() {
   const router = useRouter();
+  const { t } = usePrefs();
   const pickerRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<Draft>({ teamName: "", choices: [] });
   const [direction, setDirection] = useState<DirectionId>("social");
@@ -83,20 +85,20 @@ export default function DecidePage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-gold">{draft.teamName || "Команда"}</p>
-            <h1 className="mt-1 font-serif text-4xl font-semibold md:text-5xl">Пять мест в наборе</h1>
+            <h1 className="mt-1 font-serif text-4xl font-semibold md:text-5xl">{t("slotsTitle")}</h1>
           </div>
           <div className="text-left md:text-right">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cream/60">Score</p>
             <p className="font-serif text-5xl">{view.scored ? formatScore(view.scored.score) : "—"}</p>
             <p className="text-sm text-cream/70">
-              {view.scored ? `${formatSigned(view.scored.delta)} к базе 52,56` : `${draft.choices.length} из 5 заполнено`}
+              {view.scored ? `${formatSigned(view.scored.delta)}` : `${draft.choices.length} ${t("ofFive")} ${t("filled")}`}
             </p>
           </div>
         </div>
         <div className="mt-6">
           <div className="mb-2 flex justify-between text-sm text-cream/80">
-            <span>Потрачено {spent}</span>
-            <span>осталось {view.reserve} из 100</span>
+            <span>{t("spent")} {spent}</span>
+            <span>{t("left")} {view.reserve} {t("ofBudget")}</span>
           </div>
           <div className="meter"><span style={{ width: `${Math.min(100, spent)}%` }} /></div>
         </div>
@@ -174,13 +176,13 @@ export default function DecidePage() {
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-serif text-2xl">Каталог</h2>
+            <h2 className="font-serif text-2xl">{t("catalog")}</h2>
             <label className="flex items-center gap-2 text-sm text-ink-soft">
               <input type="checkbox" checked={onlyWeak} onChange={(event) => setOnlyWeak(event.target.checked)} />
-              Только меры для {floorDistrict?.name ?? "слабого района"}
+              {t("onlyWeak")} {floorDistrict?.name ?? ""}
             </label>
           </div>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти меру" className="field field-light mt-3" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search")} className="field field-light mt-3" />
           <div className="mt-3 flex flex-wrap gap-2">
             {city.directions.map((item) => {
               const count = draft.choices.filter((choice) => measureById(choice.measureId)?.direction === item.id).length;
@@ -273,14 +275,14 @@ export default function DecidePage() {
       <div className="dock no-print px-4 py-3">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-ink-soft">
-            {view.scored ? `Набор готов · Score ${formatScore(view.scored.score)}` : `Свободно мест: ${5 - draft.choices.length}`}
+            {view.scored ? `${t("ready")} · Score ${formatScore(view.scored.score)}` : `${t("freeSlots")}: ${5 - draft.choices.length}`}
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit([]); }}>Очистить</button>
-            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit(EXAMPLE); }}>Пример</button>
-            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit(CHEAP); }}>Дешевле</button>
+            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit([]); }}>{t("clear")}</button>
+            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit(EXAMPLE); }}>{t("example")}</button>
+            <button type="button" className="btn btn-line" onClick={() => { setPendingId(null); commit(CHEAP); }}>{t("cheap")}</button>
             <button type="button" disabled={!view.scored} onClick={() => router.push("/report")} className="btn btn-gold">
-              Открыть доклад
+              {t("openReport")}
             </button>
           </div>
         </div>
