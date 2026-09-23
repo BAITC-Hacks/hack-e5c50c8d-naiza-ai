@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Fraunces", "Times New Roman", serif;
+  --font-sans: "Source Sans 3", "Segoe UI", sans-serif;
+  --color-paper: #f3ede2;
+  --color-paper-deep: #e7dfd0;
+  --color-card: #fbf7f0;
+  --color-ink: #1a2332;
+  --color-ink-soft: #3d4a5c;
+  --color-gold: #a9782c;
+  --color-gold-soft: #e7d3ae;
+  --color-steppe: #1e6b52;
+  --color-river: #2c5f7c;
+  --color-seal: #8c2f2f;
+  --color-line: #d9cbb6;
+}
+
+body {
+  background: #f3ede2;
+  color: #1a2332;
+}
+
+.dossier {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(169, 120, 44, 0.14), transparent 28%),
+    linear-gradient(180deg, #f7f1e6 0%, #f3ede2 40%, #efe6d6 100%);
+}
+
+.stamp {
+  display: inline-block;
+  transform: rotate(-8deg);
+  border: 2px solid #8c2f2f;
+  color: #8c2f2f;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 6px 8px;
+}
+
+.paper-card {
+  background: #fbf7f0;
+  border: 1px solid #d9cbb6;
+}
+
+@media print {
+  body,
+  .dossier {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
