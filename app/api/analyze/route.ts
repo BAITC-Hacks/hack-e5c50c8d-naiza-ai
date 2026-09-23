@@ -5,6 +5,7 @@ import { InvalidPortfolioError, simulate } from "@/lib/engine/simulate";
 import type { Choice } from "@/lib/engine/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const cache = new Map<string, { briefing: Briefing }>();
 
@@ -32,11 +33,11 @@ export async function POST(request: Request) {
     if (result.choices.length !== 5) return NextResponse.json({ error: "incomplete" }, { status: 400 });
     const key = `${result.version}:${result.measures.map((item) => `${item.id}:${item.districtId ?? "city"}`).sort().join("|")}`;
     const cached = cache.get(key);
-    if (cached) return NextResponse.json(cached);
+    if (cached) return NextResponse.json(cached, { headers: { "Cache-Control": "no-store" } });
     const briefing = await runCouncil(result, teamName);
     const payload = { briefing };
     if (briefing.source === "council") cache.set(key, payload);
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof InvalidPortfolioError) {
       const over = error.reasons.some((item) => item.code === "over_budget");

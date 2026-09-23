@@ -17,6 +17,7 @@ export type SavedRun = {
 };
 
 const file = path.join(process.cwd(), "data", "runs.json");
+const maxRuns = 200;
 
 export function readRuns(): SavedRun[] {
   if (!fs.existsSync(file)) return [];
@@ -30,7 +31,8 @@ export function readRuns(): SavedRun[] {
 
 export function addRun(run: SavedRun): SavedRun[] {
   const runs = readRuns();
-  runs.push(run);
-  fs.writeFileSync(file, JSON.stringify(runs, null, 2));
-  return runs;
+  const next = [...runs, run].slice(-maxRuns);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(next, null, 2), "utf8");
+  return next;
 }

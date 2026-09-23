@@ -5,17 +5,14 @@ export function ScorePlate({ result, kicker }: { result: ScenarioResult; kicker?
   const floor = result.districts.find((item) => item.id === result.floorDistrictId);
   return (
     <div>
-      {kicker ? <p className="text-[11px] uppercase tracking-[0.18em] text-gold">{kicker}</p> : null}
-      <p className="font-serif text-6xl font-semibold leading-none text-ink md:text-7xl">{formatScore(result.score)}</p>
-      <p className="mt-2 text-sm text-ink-soft">
-        {formatSigned(result.delta)} к базе {formatScore(result.baselineScore)}
-        <span className="mx-2 text-line">/</span>
-        средний {formatScore(result.mean)}
-        <span className="mx-2 text-line">/</span>
-        пол {floor?.name} {formatScore(result.floor)}
-        <span className="mx-2 text-line">/</span>
-        провалов {result.nCrit}
-      </p>
+      {kicker ? <p className="text-sm font-semibold text-gold">{kicker}</p> : null}
+      <p className="mt-1 font-serif text-6xl font-semibold leading-none tracking-tight md:text-7xl">{formatScore(result.score)}</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="chip">{formatSigned(result.delta)} к базе</span>
+        <span className="chip">Средний {formatScore(result.mean)}</span>
+        <span className="chip">{floor?.name} {formatScore(result.floor)}</span>
+        <span className="chip">Ниже 40: {result.nCrit}</span>
+      </div>
     </div>
   );
 }

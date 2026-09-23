@@ -20,27 +20,34 @@ export default function ComparePage() {
   const max = Math.max(60, ...current.map((run) => run.score));
 
   return (
-    <main>
-      <p className="text-[11px] uppercase tracking-[0.2em] text-gold">Один бюджет, разные пятёрки</p>
-      <h1 className="mt-2 font-serif text-4xl">Полка команд</h1>
-      {runs === null ? <p className="mt-6 text-ink-soft">Открываем полку…</p> : null}
-      {runs && current.length === 0 ? <p className="mt-6 max-w-lg text-ink-soft">День ещё никто не запечатал. Закройте пять решений и оставьте прогон на полке.</p> : null}
-      <div className="mt-6 space-y-4">
-        {current.map((run) => (
-          <article key={run.createdAt + run.teamName} className="paper-card p-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
+    <main className="space-y-5">
+      <section className="hero p-6 md:p-10">
+        <p className="text-sm font-semibold text-gold">Один бюджет</p>
+        <h1 className="mt-2 font-serif text-4xl font-semibold md:text-5xl">Команды рядом</h1>
+        <p className="mt-3 max-w-xl text-cream/75">Каждая карточка — запечатанный набор на этой машине. Чужие версии данных сюда не попадают.</p>
+      </section>
+      {runs === null ? <p className="text-ink-soft">Открываем полку…</p> : null}
+      {runs && current.length === 0 ? (
+        <article className="paper-card p-8">
+          <h2 className="font-serif text-3xl">Пока пусто</h2>
+          <p className="mt-2 max-w-lg text-ink-soft">Закройте пять мер и положите доклад на полку. Здесь появятся команды.</p>
+          <Link href="/decide" className="btn btn-dark mt-5">Собрать набор</Link>
+        </article>
+      ) : null}
+      <div className="grid gap-4">
+        {current.map((run, index) => (
+          <article key={run.createdAt + run.teamName} className="paper-card grid items-center gap-4 p-5 md:grid-cols-[auto_1fr_auto]">
+            <p className="font-serif text-3xl text-gold-deep">{String(index + 1).padStart(2, "0")}</p>
+            <div>
               <h2 className="font-serif text-2xl">{run.teamName}</h2>
-              <p className="text-sm text-ink-soft">пол {run.floorDistrictName} {formatScore(run.floor)} · резерв {run.reserve} · провалов {run.nCrit}</p>
+              <p className="mt-1 text-sm text-ink-soft">Слабый район {run.floorDistrictName} · резерв {run.reserve} · провалов {run.nCrit}</p>
+              <div className="meter mt-3 bg-paper-deep"><span style={{ width: `${(run.score / max) * 100}%` }} /></div>
+              <p className="mt-3 text-sm leading-6 text-ink-soft">{run.choices.map((item) => item.title).join(" · ")}</p>
             </div>
-            <div className="mt-3 h-3 bg-paper-deep">
-              <div className="h-3 bg-steppe" style={{ width: `${(run.score / max) * 100}%` }} />
-            </div>
-            <p className="mt-2 font-semibold">{formatScore(run.score)}</p>
-            <p className="mt-1 text-sm text-ink-soft">{run.choices.map((item) => item.title).join(" · ")}</p>
+            <p className="font-serif text-5xl">{formatScore(run.score)}</p>
           </article>
         ))}
       </div>
-      <Link href="/decide" className="no-print mt-8 inline-block border border-line px-4 py-3">К набору</Link>
     </main>
   );
 }

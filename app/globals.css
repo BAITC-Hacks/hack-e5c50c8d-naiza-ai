@@ -3,46 +3,180 @@
 @theme {
   --font-serif: "Fraunces", "Times New Roman", serif;
   --font-sans: "Source Sans 3", "Segoe UI", sans-serif;
-  --color-paper: #f3ede2;
-  --color-paper-deep: #e7dfd0;
-  --color-card: #fbf7f0;
-  --color-ink: #1a2332;
-  --color-ink-soft: #3d4a5c;
-  --color-gold: #a9782c;
-  --color-gold-soft: #e7d3ae;
-  --color-steppe: #1e6b52;
-  --color-river: #2c5f7c;
-  --color-seal: #8c2f2f;
-  --color-line: #d9cbb6;
+  --color-paper: #efeae2;
+  --color-paper-deep: #e4ddd2;
+  --color-card: #fffcf8;
+  --color-ink: #121820;
+  --color-ink-soft: #5d6b78;
+  --color-gold: #e4b15a;
+  --color-gold-deep: #9a6b2f;
+  --color-gold-soft: #f8ecd4;
+  --color-steppe: #1f7a5c;
+  --color-river: #2d6d8f;
+  --color-seal: #b42318;
+  --color-line: #e6ddd2;
+  --color-cream: #f7f1e8;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: #f3ede2;
-  color: #1a2332;
+  background: #efeae2;
+  color: #121820;
 }
 
 .dossier {
   background:
-    radial-gradient(circle at 8% 0%, rgba(169, 120, 44, 0.14), transparent 28%),
-    linear-gradient(180deg, #f7f1e6 0%, #f3ede2 40%, #efe6d6 100%);
+    radial-gradient(900px 420px at 0% -10%, rgba(228, 177, 90, 0.18), transparent 55%),
+    radial-gradient(700px 380px at 100% 0%, rgba(45, 109, 143, 0.12), transparent 50%),
+    #efeae2;
 }
 
-.stamp {
-  display: inline-block;
-  transform: rotate(-8deg);
-  border: 2px solid #8c2f2f;
-  color: #8c2f2f;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-weight: 600;
-  font-size: 11px;
-  line-height: 1.2;
-  padding: 6px 8px;
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(500px 220px at 90% 0%, rgba(228, 177, 90, 0.22), transparent 60%),
+    linear-gradient(160deg, #1a2433 0%, #121820 55%, #18261f 100%);
+  color: #f7f1e8;
+  box-shadow: 0 24px 60px rgba(18, 24, 32, 0.18);
 }
 
 .paper-card {
-  background: #fbf7f0;
-  border: 1px solid #d9cbb6;
+  background: rgba(255, 252, 248, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(18, 24, 32, 0.05);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 252, 248, 0.14);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.hero .chip {
+  border: 1px solid rgba(247, 241, 232, 0.14);
+  color: rgba(247, 241, 232, 0.86);
+}
+
+.chip-light {
+  background: #f3eee6;
+  color: #5d6b78;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: transform 0.16s ease, background 0.16s ease, opacity 0.16s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.btn-dark {
+  background: #121820;
+  color: #f7f1e8;
+}
+
+.btn-gold {
+  background: #e4b15a;
+  color: #1a140c;
+}
+
+.btn-green {
+  background: #1f7a5c;
+  color: white;
+}
+
+.btn-line {
+  border: 1px solid #e6ddd2;
+  background: white;
+  color: #121820;
+}
+
+.btn-ghost {
+  border: 1px solid rgba(247, 241, 232, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f1e8;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid rgba(247, 241, 232, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f1e8;
+  padding: 0.9rem 1rem;
+  outline: none;
+}
+
+.field::placeholder {
+  color: rgba(247, 241, 232, 0.45);
+}
+
+.field:focus {
+  border-color: #e4b15a;
+}
+
+.field-light {
+  border-color: #e6ddd2;
+  background: white;
+  color: #121820;
+}
+
+.field-light::placeholder {
+  color: #8b97a3;
+}
+
+.dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  border-top: 1px solid rgba(230, 221, 210, 0.9);
+  background: rgba(255, 252, 248, 0.9);
+  backdrop-filter: blur(16px);
+}
+
+.meter {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1f7a5c, #e4b15a);
+}
+
+.paper-card .meter {
+  background: #e4ddd2;
 }
 
 @media print {
@@ -50,7 +184,12 @@ body {
   .dossier {
     background: white !important;
   }
-  .no-print {
+  .no-print,
+  .dock {
     display: none !important;
+  }
+  .hero,
+  .paper-card {
+    box-shadow: none;
   }
 }

@@ -5,6 +5,7 @@ import type { Choice } from "@/lib/engine/types";
 import { addRun, readRuns } from "@/lib/store/runs";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function parseChoices(value: unknown): Choice[] | null {
   if (!Array.isArray(value)) return null;
@@ -21,7 +22,7 @@ function parseChoices(value: unknown): Choice[] | null {
 }
 
 export async function GET() {
-  return NextResponse.json({ runs: readRuns() });
+  return NextResponse.json({ runs: readRuns() }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: Request) {

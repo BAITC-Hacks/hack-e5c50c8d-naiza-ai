@@ -23,6 +23,8 @@ export default function ReportPage() {
   const [briefing, setBriefing] = useState<Briefing | null>(null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [analysisError, setAnalysisError] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -44,10 +46,14 @@ export default function ReportPage() {
         body: JSON.stringify({ teamName: draft.teamName, choices: scored.choices }),
       })
         .then(async (response) => {
-          if (!response.ok) return;
+          if (!response.ok) {
+            setAnalysisError(true);
+            return;
+          }
           const payload = (await response.json()) as { briefing?: Briefing };
           if (payload.briefing) setBriefing(payload.briefing);
         })
+        .catch(() => setAnalysisError(true))
         .finally(() => setPending(false));
     } catch (error) {
       setProblem(error instanceof InvalidPortfolioError ? error.message : "Набор не считается.");
@@ -57,12 +63,18 @@ export default function ReportPage() {
 
   async function saveRun() {
     if (!result) return;
-    await fetch("/api/runs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teamName, choices: result.choices }),
-    });
-    setSaved(true);
+    setSaveError(false);
+    try {
+      const response = await fetch("/api/runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamName, choices: result.choices }),
+      });
+      if (!response.ok) throw new Error("save failed");
+      setSaved(true);
+    } catch {
+      setSaveError(true);
+    }
   }
 
   if (!ready) return <main className="text-ink-soft">Собираем доклад…</main>;
@@ -71,7 +83,7 @@ export default function ReportPage() {
       <main className="max-w-xl">
         <h1 className="font-serif text-4xl">Набор не запечатан</h1>
         <p className="mt-3 text-ink-soft">{problem}</p>
-        <Link href="/decide" className="mt-6 inline-block bg-ink px-4 py-3 text-paper">Вернуться к набору</Link>
+        <Link href="/decide" className="btn btn-dark mt-6">Вернуться к набору</Link>
       </main>
     );
   }
@@ -81,15 +93,19 @@ export default function ReportPage() {
   const floorName = districtById(result.floorDistrictId)?.name ?? result.floorDistrictId;
 
   return (
-    <main>
-      <p className="text-[11px] uppercase tracking-[0.2em] text-gold">Доклад · {teamName}</p>
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-6">
-        <ScorePlate result={result} kicker="Astana Quality of Life Score" />
-        <p className="max-w-sm text-sm text-ink-soft">Пол города — {floorName}. Тридцать процентов балла смотрят сюда. Провалов ниже 40: {result.nCrit}.</p>
-      </div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <CityMap districts={result.districts} />
-        <div>
+    <main className="space-y-5">
+      <section className="hero p-6 md:p-8">
+        <p className="text-sm font-semibold text-gold">Доклад · {teamName}</p>
+        <div className="mt-4 grid items-end gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <ScorePlate result={result} kicker="Astana Quality of Life Score" />
+          <p className="max-w-sm text-sm leading-6 text-cream/75">Самый слабый район — {floorName}. На него приходится тридцать процентов балла. Провалов ниже 40: {result.nCrit}.</p>
+        </div>
+      </section>
+      <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="paper-card p-4">
+          <CityMap districts={result.districts} />
+        </div>
+        <div className="paper-card p-5">
           <table className="w-full text-left text-sm">
             <thead className="text-ink-soft">
               <tr>
@@ -123,7 +139,7 @@ export default function ReportPage() {
         </div>
       </div>
 
-      <section className="mt-8 grid gap-6 md:grid-cols-2">
+      <section className="grid gap-4 md:grid-cols-2">
         <article className="paper-card p-5">
           <h2 className="font-serif text-2xl">Сильные стороны</h2>
           <ul className="mt-3 space-y-2 text-sm">{briefing.strengths.map((item) => <li key={item}>{item}</li>)}</ul>
@@ -133,24 +149,25 @@ export default function ReportPage() {
           <ul className="mt-3 space-y-2 text-sm">{briefing.risks.map((item) => <li key={item}>{item}</li>)}</ul>
         </article>
       </section>
-      <article className="paper-card mt-4 p-5">
+      <article className="paper-card p-5">
         <h2 className="font-serif text-2xl">Последствия на 8 кварталов</h2>
         <p className="mt-3 text-sm leading-6">{briefing.consequences}</p>
         {briefing.note ? <p className="mt-3 text-xs text-ink-soft">{briefing.note}</p> : null}
         {pending ? <p className="mt-3 text-xs text-gold">Секретарь ещё пишет. На экране доклад по журналу.</p> : null}
+        {analysisError ? <p className="mt-3 text-xs text-seal">Живой совет сейчас недоступен. Показан проверенный доклад по журналу расчёта.</p> : null}
         {briefing.trace.map((id) => <p key={id} className="mt-2 text-xs text-ink-soft">Секретарь открыл карточку {districtById(id)?.name ?? id}.</p>)}
       </article>
-      <section className="mt-6 grid gap-3 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-3">
         {briefing.quotes.map((quote) => (
-          <blockquote key={quote.districtId + quote.line} className="border-l-2 border-gold pl-3 text-sm">
-            <p>«{quote.line}»</p>
-            <footer className="mt-2 text-xs text-ink-soft">{quote.persona}, {districtById(quote.districtId)?.name}</footer>
+          <blockquote key={quote.districtId + quote.line} className="paper-card p-4 text-sm">
+            <p className="leading-6">«{quote.line}»</p>
+            <footer className="mt-3 text-xs font-semibold text-gold-deep">{quote.persona} · {districtById(quote.districtId)?.name}</footer>
           </blockquote>
         ))}
       </section>
 
-      <section className="mt-8">
-        <h2 className="font-serif text-2xl">Тень другого решения</h2>
+      <section>
+        <h2 className="font-serif text-3xl">Тень другого решения</h2>
         {shadows.length === 0 ? <p className="mt-2 text-sm text-ink-soft">Среди соседних наборов этот сильнейший.</p> : (
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             {shadows.map((item) => (
@@ -174,13 +191,14 @@ export default function ReportPage() {
         )}
       </section>
 
-      <div className="no-print mt-8 flex flex-wrap gap-3">
-        <Link href="/decide" className="border border-line px-4 py-3">Назад к набору</Link>
-        <button type="button" onClick={() => void saveRun()} className="border border-line px-4 py-3">{saved ? "Прогон на полке" : "Оставить прогон на полке"}</button>
-        <button type="button" onClick={() => window.print()} className="border border-line px-4 py-3">Собрать доклад</button>
-        {saved ? <Link href="/compare" className="px-4 py-3 text-gold">Открыть полку</Link> : null}
+      <div className="no-print flex flex-wrap gap-2">
+        <Link href="/decide" className="btn btn-line">Назад к набору</Link>
+        <button type="button" onClick={() => void saveRun()} className="btn btn-line">{saved ? "Уже на полке" : "Положить на полку"}</button>
+        <button type="button" onClick={() => window.print()} className="btn btn-dark">Напечатать доклад</button>
+        {saved ? <Link href="/compare" className="btn btn-green">Сравнить команды</Link> : null}
       </div>
-      <section className="mt-6 text-sm text-ink-soft">
+      {saveError ? <p className="no-print text-sm text-seal">Не удалось сохранить прогон. Проверьте, что сервер запущен, и повторите попытку.</p> : null}
+      <section className="paper-card p-5 text-sm text-ink-soft">
         {result.measures.map((item) => <p key={item.id}>{item.id}. {item.title}{item.districtName ? `, ${item.districtName}` : ", город"} — {item.cost}</p>)}
         <p className="mt-2">Стоимость {result.cost}. Остаток {result.reserve}. Условные районы, не официальная статистика.</p>
       </section>

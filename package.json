@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "demo": "tsx lib/engine/demo.ts"
+    "demo": "tsx lib/engine/demo.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test && npm run demo"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.2.8",

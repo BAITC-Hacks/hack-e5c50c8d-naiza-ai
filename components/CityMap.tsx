@@ -36,8 +36,8 @@ export function CityMap({
   return (
     <figure>
       <svg viewBox="0 0 620 470" role="img" aria-label="Схема пяти условных районов" className="h-auto w-full">
-        <rect x="0" y="0" width="620" height="470" rx="18" fill="#fbf7f0" />
-        <path d="M300 24 C340 120, 280 200, 250 280 C230 340, 270 400, 320 452" fill="none" stroke="#2C5F7C" strokeWidth="16" strokeLinecap="round" opacity="0.35" />
+        <rect x="0" y="0" width="620" height="470" rx="28" fill="#f7f3ec" />
+        <path d="M300 24 C340 120, 280 200, 250 280 C230 340, 270 400, 320 452" fill="none" stroke="#8eb4c9" strokeWidth="22" strokeLinecap="round" opacity="0.55" />
         {SPOTS.map((spot) => {
           const district = byId.get(spot.id);
           const score = district?.afterScore ?? 0;
@@ -51,8 +51,8 @@ export function CityMap({
                 ry={spot.ry}
                 fill={scoreColor(score)}
                 opacity={highlight.length === 0 || active ? 0.92 : 0.4}
-                stroke={active ? "#A9782C" : "#1A2332"}
-                strokeWidth={active ? 4 : 1.2}
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth={active ? 5 : 2}
               />
               <text x={spot.cx} y={spot.cy - 6} textAnchor="middle" fill="#FBF7F0" fontSize="16" fontFamily="Fraunces, serif">
                 {district?.name ?? spot.id}
@@ -64,7 +64,7 @@ export function CityMap({
           );
         })}
       </svg>
-      <figcaption className="mt-2 text-xs text-ink-soft">Схема условных районов, не географическая карта. Цвет — индекс района.</figcaption>
+      <figcaption className="mt-3 text-sm text-ink-soft">Чем зеленее район, тем выше его индекс. Это схема, не карта города.</figcaption>
     </figure>
   );
 }
