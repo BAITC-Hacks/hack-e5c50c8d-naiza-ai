@@ -80,7 +80,7 @@ npm run dev
 В проекте также есть `Akim.exe`. Это Windows-лаунчер для папки проекта: рядом с ним должны лежать `package.json` и `node_modules`, а Node.js LTS должен быть установлен в PATH. Лаунчер поднимает сервер на `http://localhost:4173`, показывает окно управления сервером и открывает браузер.
 
 Для жюри и пользователей без установленного Node.js предназначен portable-релиз:
-скачайте [akim-na-5-chasov-portable-win-x64.zip](https://github.com/BAITC-Hacks/hack-e5c50c8d-naiza-ai/releases/download/v1.0.0-hackalem/akim-na-5-chasov-portable-win-x64.zip),
+скачайте [akim-na-5-chasov-portable-win-x64-clean.zip](https://github.com/BAITC-Hacks/hack-e5c50c8d-naiza-ai/releases/download/v1.0.0-hackalem/akim-na-5-chasov-portable-win-x64-clean.zip),
 распакуйте архив полностью и запустите `START-HERE.cmd`. Внутри уже есть нужный
 Node.js runtime и зависимости; вручную устанавливать Node.js не требуется.
 
